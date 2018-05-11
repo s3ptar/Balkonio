@@ -23,6 +23,7 @@ uint8_t old_hour, last_minute;
 bool sync_comlete;
 bool update_cycle = false;
 void SendUSART1(char* str) ;
+uint32_t volume_TimeOut = 0;
 /************************************************************************
 /! \fn          void main(void)
 *  \brief       mainfunction
@@ -73,9 +74,18 @@ void main(void) {
          *          update time               *
          * ********************************************/
         if(update_cycle){
-            update_time(0,0,0,valide_command);
-            show_time_on_7SegmentDisplay();
-            update_LED_Circle();
+            if(!check_Volume() && volume_TimeOut == 0){
+                //no change and timer down, show time
+                update_time(0,0,0,valide_command);
+                show_time_on_7SegmentDisplay();
+                update_LED_Circle();
+            }
+            else{
+                show_volume_on_7SegmentDisplay();
+                volume_TimeOut--;
+
+            }
+
             update_cycle = false;
         }
 

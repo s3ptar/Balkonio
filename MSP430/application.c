@@ -17,6 +17,7 @@
 /*                		Definitions                               		*/
 /************************************************************************/
 enum timeformat {Hour1, Hour2, Minute1, Minute2, Second1, Second2};
+enum volumeformat {houndred, tens, ons};
 enum count_modes {toggle, up, down, on, off};
 /************************************************************************/
 /*                		Constants                               		*/
@@ -169,6 +170,7 @@ const uint8_t adr_val[] = {	PCF8575_2,
 extern uint8_t Uart1_Rx_Buffer[16];
 uint8_t I2C_WriteBuf[I2CWriteBufferSize];
 uint8_t timestate = Hour1;
+uint8_t volumestate = houndred;
 bool valide_command;
 struct tm timestamp;
 struct tm received_time;
@@ -179,6 +181,8 @@ static uint8_t flash_state = off;
 static uint8_t count_mode = up;
 static uint16_t last_PCF8575_Val[] = {0,0,0,0};
 static uint8_t Led_Mode = single, new_Led_Mode = single;
+static uint8_t volume_store;
+extern uint32_t volume_TimeOut;
 /************************************************************************
 /! \fn			void change_circle_mode(uint8_t circle_Mode)
 *  \brief		change the led circle mode
@@ -407,6 +411,138 @@ void show_time_on_7SegmentDisplay(void){
 		timestate++;
 }
 
+/************************************************************************
+/! \fn          void show_volume_on_7SegmentDisplay
+*  \brief       print volume to 7Segment
+*  \param       none
+*  \exception   none
+*  \return      none
+************************************************************************/
+void show_volume_on_7SegmentDisplay(void){
+
+    uint8_t temp_volume;
+    uint8_t scale_volume;
+
+    Dis0_Off;
+    Dis1_Off;
+    Dis2_Off;
+    Dis3_Off;
+    Dis4_Off;
+    Dis5_Off;
+
+    //anzuzeigende Zahl exrahieren
+    switch(volumestate){
+        case houndred:{
+            temp_volume = volume_store/100;
+            break;
+        }
+        case tens:{
+            temp_volume = (volume_store%100)/10;
+            break;
+        }
+        case ons:{
+            temp_volume = volume_store%10;
+            break;
+        }
+    }
+    switch(temp_volume){
+        case 0:{
+            Show0;
+            break;
+        }
+        case 1:{
+            Show1;
+            break;
+        }
+        case 2:{
+            Show2;
+            break;
+        }
+        case 3:{
+            Show3;
+            break;
+        }
+        case 4:{
+            Show4;
+            break;
+        }
+        case 5:{
+            Show5;
+            break;
+        }
+        case 6:{
+            Show6;
+            break;
+        }
+        case 7:{
+            Show7;
+            break;
+        }
+        case 8:{
+            Show8;
+            break;
+        }
+        case 9:{
+            Show9;
+            break;
+        }
+    }
+    switch(volumestate){
+        case houndred:{
+            Dis2_On;
+            break;
+        }
+        case tens:{
+            Dis3_On;
+            break;
+        }
+        case ons:{
+            Dis4_On;
+            break;
+        }
+    }
+    if (volumestate>= ons)
+        volumestate = houndred;
+    else
+        volumestate++;
+
+    change_circle_mode(count_up);
+    //scale volume
+    scale_volume = volume_store>>1;
+    update_LED_Circle();
+}
+
+/************************************************************************
+/! \fn          void update_LED_Circle_value(uint8_t count_value, uint8_t format)
+*  \brief       show the value on the LED Circle
+*  \param       uint8_t count_value, uint8_t format
+*  \exception   none
+*  \return      none
+************************************************************************/
+void update_LED_Circle_value(uint8_t count_value, uint8_t format){
+
+    //Adresse bestimmen
+    act_adr = (uint8_t)(adr_val[count_value]);
+    switch(act_adr){
+                case PCF8575_1:{
+                    last_PCF8575_Val[0] |= clock_val[count_value];
+                    break;
+                }
+                case PCF8575_2:{
+                    last_PCF8575_Val[1] |= clock_val[count_value];
+                    break;
+                }
+                case PCF8575_3:{
+                    last_PCF8575_Val[2] |= clock_val[count_value];
+                    break;
+                }
+                case PCF8575_4:{
+                    last_PCF8575_Val[3] |= clock_val[count_value];
+                    break;
+                }
+            }
+
+}
 
 /************************************************************************
 /! \fn			void update_time(uint8_t hour, uint8_t minute,uint8_t second, bool new_time)
@@ -438,14 +574,47 @@ void update_time(uint8_t hour, uint8_t minute,uint8_t second, bool new_time){
                 timestamp.tm_sec++;
 		}else{
 
-		    timestamp.tm_sec = (Uart1_Rx_Buffer[6]-48)*10+(Uart1_Rx_Buffer[7]-48);;
-		    timestamp.tm_min = (Uart1_Rx_Buffer[3]-48)*10+(Uart1_Rx_Buffer[4]-48);;
-		    timestamp.tm_hour = (Uart1_Rx_Buffer[0]-48)*10+(Uart1_Rx_Buffer[1]-48);
+		    timestamp.tm_sec = (Uart1_Rx_Buffer[7]-48)*10+(Uart1_Rx_Buffer[8]-48);
+		    timestamp.tm_min = (Uart1_Rx_Buffer[4]-48)*10+(Uart1_Rx_Buffer[5]-48);
+		    timestamp.tm_hour = (Uart1_Rx_Buffer[1]-48)*10+(Uart1_Rx_Buffer[2]-48);
 		    valide_command = 0;
 
 		}
 
 	}
+}
+
+/************************************************************************
+/! \fn          bool check_Volume()
+*  \brief       check if volume has changed
+*  \param       uint8_t new_volume
+*  \exception   none
+*  \return      true if change,
+************************************************************************/
+bool check_Volume(){
+
+    bool return_value = false;
+    uint8_t temp_volume;
+
+    //if command receive check
+    if(valide_command){
+
+        temp_volume = ((Uart1_Rx_Buffer[10]-48)*100) + ((Uart1_Rx_Buffer[11]-48)*10) + (Uart1_Rx_Buffer[12]-48);
+        if (temp_volume != volume_store){
+            return_value = true;
+            volume_TimeOut = _Volume_TimeOut_;
+        }
+        else
+            return_value = false;
+
+        volume_store = temp_volume;
+
+    //Show volume
+
+    }
+
+    return return_value;
+
 }
 
 /************************************************************************
@@ -593,7 +762,7 @@ void update_LED_Circle(void){
 		act_adr = (uint8_t)(adr_val[timestamp.tm_sec]);
 		switch(act_adr){
 			case PCF8575_1:{
-				last_PCF8575_Val[0] |= clock_val[timestamp.tm_sec];;
+				last_PCF8575_Val[0] |= clock_val[timestamp.tm_sec];
 				break;
 			}
 			case PCF8575_2:{

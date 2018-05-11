@@ -95,12 +95,12 @@ __interrupt void I2C_ISR(void)
 ************************************************************************/
 #pragma vector=USART1RX_VECTOR
  __interrupt void Usart1_Rx(void){
-     valide_command = true;
+
      Uart1_RX_Cnt++;
      //Check overflow
      if(Uart1_RX_Cnt == Max_RX1_Buffer_Size)
          Uart1_RX_Cnt = 0;
-     if(RXBUF1 == "t")
+     if(RXBUF1 == 116) //t
          Uart1_RX_Cnt = 0;
      if(RXBUF1 == 0x0d){
 

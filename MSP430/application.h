@@ -29,5 +29,7 @@ void setup_Time(uint8_t Hour, uint16_t Minute, uint16_t Seconds, uint8_t circle_
 void update_time(uint8_t hour, uint8_t minute,uint8_t second, bool new_time);
 void update_LED_Circle(void);
 void change_circle_mode(uint8_t circle_Mode);
+bool check_Volume();
+void show_volume_on_7SegmentDisplay(void);
 
 #endif /* APPLICATION_H_ */
