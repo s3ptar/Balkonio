@@ -1,0 +1,1 @@
+"./Segment_drv.obj" "./application.obj" "./i2c.obj" "./interrupt.obj" "./main.obj" "./system.obj" "../lnk_msp430f169.cmd" -llibc.a 
