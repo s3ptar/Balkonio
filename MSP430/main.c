@@ -91,7 +91,7 @@ void main(void) {
 
         /**********************************************
          *          change display mode               *
-         * ********************************************/
+         * *******************************************
         if(last_minute != timestamp.tm_min){
             last_minute = timestamp.tm_min;
 
@@ -106,7 +106,7 @@ void main(void) {
             else
                 change_circle_mode(count_toggle);
 
-        }
+        }*/
     }
 
 }

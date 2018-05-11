@@ -508,8 +508,8 @@ void show_volume_on_7SegmentDisplay(void){
 
     change_circle_mode(count_up);
     //scale volume
-    scale_volume = volume_store>>1;
-    update_LED_Circle();
+    scale_volume = (uint8_t)((volume_store*60)/100);
+    update_LED_Circle_value(scale_volume,0);
 }
 
 /************************************************************************
@@ -521,26 +521,50 @@ void show_volume_on_7SegmentDisplay(void){
 ************************************************************************/
 void update_LED_Circle_value(uint8_t count_value, uint8_t format){
 
+    uint16_t vol_PCF8575_Val[] = {0,0,0,0};
+    uint8_t index = 0;
+    uint8_t act_adr;
+
+    //clear array
+    for(index = 0; index < count_value; index++){
     //Adresse bestimmen
-    act_adr = (uint8_t)(adr_val[count_value]);
-    switch(act_adr){
+        act_adr = (uint8_t)(adr_val[index]);
+        switch(act_adr){
                 case PCF8575_1:{
-                    last_PCF8575_Val[0] |= clock_val[count_value];
+                    vol_PCF8575_Val[0] |= clock_val[index];
                     break;
                 }
                 case PCF8575_2:{
-                    last_PCF8575_Val[1] |= clock_val[count_value];
+                    vol_PCF8575_Val[1] |= clock_val[index];
                     break;
                 }
                 case PCF8575_3:{
-                    last_PCF8575_Val[2] |= clock_val[count_value];
+                    vol_PCF8575_Val[2] |= clock_val[index];
                     break;
                 }
                 case PCF8575_4:{
-                    last_PCF8575_Val[3] |= clock_val[count_value];
+                    vol_PCF8575_Val[3] |= clock_val[index];
                     break;
                 }
-            }
+        }
+    }
+
+    I2C_WriteBuf[0]=(uint8_t)(vol_PCF8575_Val[0]);
+    I2C_WriteBuf[1]=(uint8_t)(vol_PCF8575_Val[0]>>8);
+    write_i2c2(PCF8575_1, I2C_WriteBuf, 2);
+    I2C_WriteBuf[0]=(uint8_t)(vol_PCF8575_Val[1]);
+    I2C_WriteBuf[1]=(uint8_t)(vol_PCF8575_Val[1]>>8);
+    write_i2c2(PCF8575_2, I2C_WriteBuf, 2);
+    I2C_WriteBuf[0]=(uint8_t)(vol_PCF8575_Val[2]);
+    I2C_WriteBuf[1]=(uint8_t)(vol_PCF8575_Val[2]>>8);
+    write_i2c2(PCF8575_3, I2C_WriteBuf, 2);
+    I2C_WriteBuf[0]=(uint8_t)(vol_PCF8575_Val[3]);
+    I2C_WriteBuf[1]=(uint8_t)(vol_PCF8575_Val[3]>>8);
+    write_i2c2(PCF8575_4, I2C_WriteBuf, 2);
+
+
+
+
 
 }
 
