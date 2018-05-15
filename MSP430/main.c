@@ -78,10 +78,17 @@ void main(void) {
                 //no change and timer down, show time
                 update_time(0,0,0,valide_command);
                 show_time_on_7SegmentDisplay();
-                update_LED_Circle();
+                //update_LED_Circle();
+                update_LED_Circle_count_up(timestamp.tm_sec);
             }
             else{
                 show_volume_on_7SegmentDisplay();
+                if(volume_TimeOut == 1){
+                    update_time(0,0,0,valide_command);
+                    update_LED_Circle_value(0, 0);
+                    change_circle_mode(count_up);
+                    update_LED_Circle_value(timestamp.tm_sec, 0);
+                }
                 volume_TimeOut--;
 
             }
@@ -91,7 +98,7 @@ void main(void) {
 
         /**********************************************
          *          change display mode               *
-         * *******************************************
+         * ********************************************/
         if(last_minute != timestamp.tm_min){
             last_minute = timestamp.tm_min;
 
@@ -106,7 +113,7 @@ void main(void) {
             else
                 change_circle_mode(count_toggle);
 
-        }*/
+        }
     }
 
 }

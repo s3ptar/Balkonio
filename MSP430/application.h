@@ -32,5 +32,6 @@ void change_circle_mode(uint8_t circle_Mode);
 bool check_Volume();
 void show_volume_on_7SegmentDisplay(void);
 void update_LED_Circle_value(uint8_t count_value, uint8_t format);
+void update_LED_Circle_count_up(uint8_t LED);
 
 #endif /* APPLICATION_H_ */

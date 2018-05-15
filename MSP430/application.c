@@ -182,6 +182,7 @@ static uint8_t count_mode = up;
 static uint16_t last_PCF8575_Val[] = {0,0,0,0};
 static uint8_t Led_Mode = single, new_Led_Mode = single;
 static uint8_t volume_store;
+static uint8_t last_written_LED = 0;
 extern uint32_t volume_TimeOut;
 /************************************************************************
 /! \fn			void change_circle_mode(uint8_t circle_Mode)
@@ -512,6 +513,7 @@ void show_volume_on_7SegmentDisplay(void){
     update_LED_Circle_value(scale_volume,0);
 }
 
+
 /************************************************************************
 /! \fn          void update_LED_Circle_value(uint8_t count_value, uint8_t format)
 *  \brief       show the value on the LED Circle
@@ -521,50 +523,111 @@ void show_volume_on_7SegmentDisplay(void){
 ************************************************************************/
 void update_LED_Circle_value(uint8_t count_value, uint8_t format){
 
-    uint16_t vol_PCF8575_Val[] = {0,0,0,0};
     uint8_t index = 0;
     uint8_t act_adr;
-
+    last_PCF8575_Val[0] = 0;
+    last_PCF8575_Val[1] = 0;
+    last_PCF8575_Val[2] = 0;
+    last_PCF8575_Val[3] = 0;
+    last_written_LED = count_value;
     //clear array
     for(index = 0; index < count_value; index++){
     //Adresse bestimmen
         act_adr = (uint8_t)(adr_val[index]);
         switch(act_adr){
                 case PCF8575_1:{
-                    vol_PCF8575_Val[0] |= clock_val[index];
+                    last_PCF8575_Val[0] |= clock_val[index];
                     break;
                 }
                 case PCF8575_2:{
-                    vol_PCF8575_Val[1] |= clock_val[index];
+                    last_PCF8575_Val[1] |= clock_val[index];
                     break;
                 }
                 case PCF8575_3:{
-                    vol_PCF8575_Val[2] |= clock_val[index];
+                    last_PCF8575_Val[2] |= clock_val[index];
                     break;
                 }
                 case PCF8575_4:{
-                    vol_PCF8575_Val[3] |= clock_val[index];
+                    last_PCF8575_Val[3] |= clock_val[index];
                     break;
                 }
         }
     }
 
-    I2C_WriteBuf[0]=(uint8_t)(vol_PCF8575_Val[0]);
-    I2C_WriteBuf[1]=(uint8_t)(vol_PCF8575_Val[0]>>8);
+    I2C_WriteBuf[0]=(uint8_t)(last_PCF8575_Val[0]);
+    I2C_WriteBuf[1]=(uint8_t)(last_PCF8575_Val[0]>>8);
     write_i2c2(PCF8575_1, I2C_WriteBuf, 2);
-    I2C_WriteBuf[0]=(uint8_t)(vol_PCF8575_Val[1]);
-    I2C_WriteBuf[1]=(uint8_t)(vol_PCF8575_Val[1]>>8);
+    I2C_WriteBuf[0]=(uint8_t)(last_PCF8575_Val[1]);
+    I2C_WriteBuf[1]=(uint8_t)(last_PCF8575_Val[1]>>8);
     write_i2c2(PCF8575_2, I2C_WriteBuf, 2);
-    I2C_WriteBuf[0]=(uint8_t)(vol_PCF8575_Val[2]);
-    I2C_WriteBuf[1]=(uint8_t)(vol_PCF8575_Val[2]>>8);
+    I2C_WriteBuf[0]=(uint8_t)(last_PCF8575_Val[2]);
+    I2C_WriteBuf[1]=(uint8_t)(last_PCF8575_Val[2]>>8);
     write_i2c2(PCF8575_3, I2C_WriteBuf, 2);
-    I2C_WriteBuf[0]=(uint8_t)(vol_PCF8575_Val[3]);
-    I2C_WriteBuf[1]=(uint8_t)(vol_PCF8575_Val[3]>>8);
+    I2C_WriteBuf[0]=(uint8_t)(last_PCF8575_Val[3]);
+    I2C_WriteBuf[1]=(uint8_t)(last_PCF8575_Val[3]>>8);
     write_i2c2(PCF8575_4, I2C_WriteBuf, 2);
 
+}
 
+/************************************************************************
+/! \fn          void update_LED_Circle_count_up(uint8_t LED)
+*  \brief       count up to actual state
+*  \param       uint8_t LED
+*  \exception   none
+*  \return      none
+************************************************************************/
+void update_LED_Circle_count_up(uint8_t LED){
 
+    uint8_t act_adr;
+    uint8_t index = 0;
 
+    if(LED == last_written_LED)
+        //do nothing
+        return;
+    if(LED == 0){
+        update_LED_Circle_value(0,0);
+        last_written_LED = LED;
+        return;
+    }
+
+    //clear array
+    //Adresse bestimmen
+    act_adr = (uint8_t)(adr_val[index]);
+    for(index = last_written_LED; index <= LED; index++){
+    //Adresse bestimmen
+        act_adr = (uint8_t)(adr_val[index]);
+        switch(act_adr){
+                case PCF8575_1:{
+                    last_PCF8575_Val[0] |= clock_val[index];
+                    I2C_WriteBuf[0]=(uint8_t)(last_PCF8575_Val[0]);
+                    I2C_WriteBuf[1]=(uint8_t)(last_PCF8575_Val[0]>>8);
+                    write_i2c2(PCF8575_1, I2C_WriteBuf, 2);
+                    break;
+                }
+                case PCF8575_2:{
+                    last_PCF8575_Val[1] |= clock_val[index];
+                    I2C_WriteBuf[0]=(uint8_t)(last_PCF8575_Val[1]);
+                    I2C_WriteBuf[1]=(uint8_t)(last_PCF8575_Val[1]>>8);
+                    write_i2c2(PCF8575_2, I2C_WriteBuf, 2);
+                    break;
+                }
+                case PCF8575_3:{
+                    last_PCF8575_Val[2] |= clock_val[index];
+                    I2C_WriteBuf[0]=(uint8_t)(last_PCF8575_Val[2]);
+                    I2C_WriteBuf[1]=(uint8_t)(last_PCF8575_Val[2]>>8);
+                    write_i2c2(PCF8575_3, I2C_WriteBuf, 2);
+                    break;
+                }
+                case PCF8575_4:{
+                    last_PCF8575_Val[3] |= clock_val[index];
+                    I2C_WriteBuf[0]=(uint8_t)(last_PCF8575_Val[3]);
+                    I2C_WriteBuf[1]=(uint8_t)(last_PCF8575_Val[3]>>8);
+                    write_i2c2(PCF8575_4, I2C_WriteBuf, 2);
+                    break;
+                }
+        }
+    }
+    last_written_LED = LED;
 
 }
 
